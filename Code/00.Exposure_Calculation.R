@@ -92,7 +92,7 @@ plan(multisession, workers = (availableCores() - 1))
 TAVG_Exposure <- Exposure_Calculation_pipeline(birth)
 
 
-setwd("~/Trimester_Calculations/Data/Outputs")
+setwd("~/Trimester_Calculation/Data/Outputs")
 write_parquet(TAVG_Exposure, "TAVG_Exposure.parquet")
 
 

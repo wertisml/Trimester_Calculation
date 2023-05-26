@@ -41,5 +41,5 @@ result_df <- Percentile_Data %>%
 # View the resulting data frame
 result_df
 
-setwd("~/Trimester_Calculations/Data/Outputs")
+setwd("~/Trimester_Calculation/Data/Outputs")
 write_parquet(TAVG_Exposure, "TAVG_Average_Exposure.parquet")
