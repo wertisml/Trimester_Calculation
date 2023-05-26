@@ -49,9 +49,9 @@ po/*~
 rsconnect/
 
 # files types
-*.parquet
 *.sas7bdat
 
-# Ignore this entire directory
+# Ignore these files
 Data/Outputs/
 Data/Pre_Data/
+
