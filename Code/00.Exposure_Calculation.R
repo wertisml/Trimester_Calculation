@@ -3,7 +3,7 @@ library(furrr)
 library(tidyverse)
 library(arrow)
 
-setwd("~/Trimester_Calculation/Data/Files_For_Calculations")
+setwd("~/Trimester_Calculation/Data")
 
 # This is where we subset the date to fit our need
 birth <- open_dataset("Trimester_Data.parquet") %>%
