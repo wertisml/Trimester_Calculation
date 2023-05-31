@@ -11,12 +11,12 @@ birth <- open_dataset("Trimester_Data.parquet") %>%
   rename(Date = ADMD) %>% # Renaming the Admitantce column
   collect() %>%
   mutate(Date = as.Date(Date, "1960-01-01"), # Changing the date format
-         Tr1 = as.Date(Date) - (GEST * 7), # Calculating the start of Trimester 1 based on ADMD and gestation age
+         Pre = as.Date(Date) - ((GEST * 7) + (13*7)), # Calculating the start of Trimester 1 based on ADMD and gestation age
          Tr3_end = Date,
-         Days_Between = interval(Tr1, Tr3_end) %/% days(1), # Determine the number of days between the start of trimester 1 and birth
+         Days_Between = interval(Pre, Tr3_end) %/% days(1), # Determine the number of days between the start of trimester 1 and birth
          zip = ZIP) %>%
   filter(Days_Between <= 301) %>% # If the individual was pregnate for over 301 days they are removed, there are some errors with individuals pregnate for 600+ days
-  select(ZIP, zip, Date, RFA_ID, Tr1, Tr3_end)
+  select(ZIP, zip, Date, RFA_ID, Pre, Tr3_end)
 
 Temperature <- open_dataset("Heatwave.parquet") %>%
   collect() %>%
@@ -37,7 +37,7 @@ Exposure <- Temperature %>%
 create_days <- function(birth_data){
   # Create new columns for each row
   for (i in 1:nrow(birth_data)) {
-    start_date <- birth_data$Tr1[i]
+    start_date <- birth_data$Pre[i]
     end_date <- birth_data$Tr3_end[i]
     
     # Calculate the number of days between the start and end dates

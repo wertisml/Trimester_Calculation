@@ -39,16 +39,21 @@ Exposure_Calculation_pipeline <- function(dataset) {
 start_col <- "Day_1"
 end_col <- "Day_91"
 
+# Run in parallel
+setwd("~/Trimester_Calculation/Data/Outputs")
+plan(multisession, workers = (availableCores() - 1))
+
 # Set-up for loop to process 1 Zip Code at a time
-for(i in 1:length(dat.files)){
+for(i in 105:length(dat.files)){
   
   # Read in a single partitioned parquet file
   setwd("~/Trimester_Calculation/Data/Outputs/TAVG_Exposure_partitioned")
-  dataset <- open_dataset(dat.files[i]) %>% select(-Day_0) %>% collect()
+  
+  dataset <- open_dataset(dat.files[i]) %>% 
+    select(ZIP, RFA_ID, percentile_95, percentile_90, percentile_10, percentile_05,
+           Pre, Tr3_end, all_of(start_col):all_of(end_col), Identifier) %>% 
+    collect()
 
-  # Run in parallel
-  setwd("~/Trimester_Calculation/Data/Outputs")
-  plan(multisession, workers = (availableCores() - 1))
   Average_Exposure_Value <- Exposure_Calculation_pipeline(dataset)
   
   # Write the new calculated dataset out as a parquet file with the Zip Code as the end of the file name
