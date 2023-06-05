@@ -20,7 +20,7 @@ Exposure_Percentiles <- function(Data){
            mean_90th_to_95th = mean(c_across(starts_with(start_col):starts_with(end_col))[c_across(starts_with(start_col):starts_with(end_col)) > percentile_90 & c_across(starts_with(start_col):starts_with(end_col)) <= percentile_95], na.rm = TRUE),
            mean_above_95th = mean(c_across(starts_with(start_col):starts_with(end_col))[c_across(starts_with(start_col):starts_with(end_col)) > percentile_95], na.rm = TRUE)) %>%
     ungroup() %>%
-    select(RFA_ID, ZIP, mean_below_5th, mean_5th_to_10th, mean_10th_to_90th, mean_90th_to_95th, mean_above_95th)
+    select(RFA_ID, location, mean_below_5th, mean_5th_to_10th, mean_10th_to_90th, mean_90th_to_95th, mean_above_95th, Date)
   
   return(Data)
 }
@@ -44,20 +44,20 @@ setwd("~/Trimester_Calculation/Data/Outputs")
 plan(multisession, workers = (availableCores() - 1))
 
 # Set-up for loop to process 1 Zip Code at a time
-for(i in 105:length(dat.files)){
+for(i in 118:length(dat.files)){
   
   # Read in a single partitioned parquet file
   setwd("~/Trimester_Calculation/Data/Outputs/TAVG_Exposure_partitioned")
   
   dataset <- open_dataset(dat.files[i]) %>% 
-    select(ZIP, RFA_ID, percentile_95, percentile_90, percentile_10, percentile_05,
-           Pre, Tr3_end, all_of(start_col):all_of(end_col), Identifier) %>% 
+    select(location, RFA_ID, percentile_95, percentile_90, percentile_10, percentile_05,
+           Tr1, Tr3_end, all_of(start_col):all_of(end_col), Identifier) %>% 
     collect()
 
   Average_Exposure_Value <- Exposure_Calculation_pipeline(dataset)
   
   # Write the new calculated dataset out as a parquet file with the Zip Code as the end of the file name
   setwd("~/Trimester_Calculation/Data/Outputs/Percentiles_Exposure")
-  write_parquet(Average_Exposure_Value, paste0("Average_Exposure_Value_",dataset$ZIP[1],".parquet"))
+  write_parquet(Average_Exposure_Value, paste0("Average_Exposure_Value_",dataset$location[1],".parquet"))
 
 }

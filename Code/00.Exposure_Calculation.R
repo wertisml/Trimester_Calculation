@@ -7,24 +7,26 @@ setwd("~/Trimester_Calculation/Data")
 
 # This is where we subset the date to fit our need
 birth <- open_dataset("Trimester_Data.parquet") %>%
-  filter(ZIP < 29945, ZIP > 29000) %>% # Limit the data to individuals in SC
-  rename(Date = ADMD) %>% # Renaming the Admitantce column
+  rename(Date = ADMD,
+         location = ZIP) %>% # Renaming the Admitantce column
+  filter(location < 29945, location > 29000) %>% # Limit the data to individuals in SC
   collect() %>%
   mutate(Date = as.Date(Date, "1960-01-01"), # Changing the date format
          Pre = as.Date(Date) - ((GEST * 7) + (13*7)), # Calculating the start of Trimester 1 based on ADMD and gestation age
          Tr3_end = Date,
          Days_Between = interval(Pre, Tr3_end) %/% days(1), # Determine the number of days between the start of trimester 1 and birth
-         zip = ZIP) %>%
+         Location = location) %>%
   filter(Days_Between <= 301) %>% # If the individual was pregnate for over 301 days they are removed, there are some errors with individuals pregnate for 600+ days
-  select(ZIP, zip, Date, RFA_ID, Pre, Tr3_end)
+  select(location, Location, Date, RFA_ID, Pre, Tr3_end)
 
 Temperature <- open_dataset("Heatwave.parquet") %>%
+  rename(location = Zip) %>%
   collect() %>%
-  filter(Zip < 29945, Zip > 29000) # Limits the data to just SC Zip codes
+  filter(location < 29945, location > 29000) # Limits the data to just SC Zip codes
 
 Exposure <- Temperature %>%
   rename(Exposure = TAVG) %>% # Rename the exposure variable that we are curious about
-  select(Date, Zip, Exposure) 
+  select(Date, location, Exposure) 
 
 #==============================================================================#
 # Functions
@@ -34,6 +36,7 @@ Exposure <- Temperature %>%
 # each day between the start and end dates specified in the dataframe. The
 # function modifies the original dataframe and returns the modified dataframe as 
 # the output.
+
 create_days <- function(birth_data){
   # Create new columns for each row
   for (i in 1:nrow(birth_data)) {
@@ -60,7 +63,7 @@ assign_Exposure_temperatures <- function(birth_data){
     # Perform a left join to match dates and replace with temperature values
     merged_dataset <- birth_data %>%
       rename("Date_in_Question" = col) %>%
-      left_join(Exposure, by = c("Date_in_Question" = "Date", "zip" = "Zip")) %>%
+      left_join(Exposure, by = c("Date_in_Question" = "Date", "location" = "location")) %>%
       select("Date_in_Question", Exposure) %>%
       rename(!!col := Exposure)
     
@@ -81,7 +84,7 @@ Exposure_Calculation <- function(birth_data){
 Exposure_Calculation_pipeline <- function(birth_data) {
   
   test <- birth_data %>%
-    nest(data = c(-ZIP)) %>%
+    nest(data = c(-location)) %>%
     mutate(calculate = future_map(data, Exposure_Calculation)) %>%
     select(-data) %>% 
     unnest(cols = c(calculate), names_repair = "minimal")
