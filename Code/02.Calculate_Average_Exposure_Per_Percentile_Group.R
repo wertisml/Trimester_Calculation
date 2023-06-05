@@ -30,7 +30,7 @@ Exposure_Percentiles <- function(Data){
               mean_above_95th = mean(value[value > Extremes[,1]])) %>%
     bind_cols(Data, .) %>%
     data.frame() %>%
-    select(RFA_ID, ZIP, mean_below_5th, mean_5th_to_10th, mean_10th_to_90th, mean_90th_to_95th, mean_above_95th, Identifier)
+    select(RFA_ID, location, mean_below_5th, mean_5th_to_10th, mean_10th_to_90th, mean_90th_to_95th, mean_above_95th, Identifier)
   
   return(Data)
 }
@@ -50,7 +50,7 @@ for(i in 1:length(dat.files)){
   setwd("~/Trimester_Calculation/Data/Outputs/TAVG_Exposure_partitioned")
   
   dataset <- open_dataset(dat.files[i]) %>% 
-    select(ZIP, RFA_ID, percentile_95, percentile_90, percentile_10, percentile_05,
+    select(location, RFA_ID, percentile_95, percentile_90, percentile_10, percentile_05,
            Tr1, Tr3_end, all_of(start_col):all_of(end_col), Identifier) %>% 
     collect()
   
@@ -58,6 +58,6 @@ for(i in 1:length(dat.files)){
   
   # Write the new calculated dataset out as a parquet file with the Zip Code as the end of the file name
   setwd("~/Trimester_Calculation/Data/Outputs/Percentiles_Exposure")
-  write_parquet(Average_Exposure_Value, paste0("Average_Exposure_Value_",dataset$ZIP[i],".parquet"))
+  write_parquet(Average_Exposure_Value, paste0("Average_Exposure_Value_",dataset$location[i],".parquet"))
   
 }
