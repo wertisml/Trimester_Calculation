@@ -54,4 +54,4 @@ rsconnect/
 # Ignore these files
 Data/Outputs/
 Data/Pre_Data/
-
+Data/Trimester_Data.parquet
