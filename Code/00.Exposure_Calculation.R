@@ -84,7 +84,7 @@ Exposure_Calculation <- function(birth_data){
 Exposure_Calculation_pipeline <- function(birth_data) {
   
   test <- birth_data %>%
-    nest(data = c(-location)) %>%
+    nest(data = c(-Location)) %>%
     mutate(calculate = future_map(data, Exposure_Calculation)) %>%
     select(-data) %>% 
     unnest(cols = c(calculate), names_repair = "minimal")
@@ -93,7 +93,6 @@ Exposure_Calculation_pipeline <- function(birth_data) {
 # Run in parallel
 plan(multisession, workers = (availableCores() - 1))
 TAVG_Exposure <- Exposure_Calculation_pipeline(birth)
-
 
 setwd("~/Trimester_Calculation/Data/Outputs")
 write_parquet(TAVG_Exposure, "TAVG_Exposure.parquet")
