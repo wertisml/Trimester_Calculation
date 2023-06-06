@@ -90,7 +90,7 @@ Exposure_Calculation_pipeline <- function(birth_data) {
     unnest(cols = c(calculate), names_repair = "minimal")
 }
 
-# Run in parallel
+# Run in parallel    
 plan(multisession, workers = (availableCores() - 1))
 TAVG_Exposure <- Exposure_Calculation_pipeline(birth)
 
