@@ -38,21 +38,29 @@ Exposure <- Temperature %>%
 # the output.
 
 create_days <- function(birth_data){
-  # Create new columns for each row
+  
+  # Calculate number of days between start and end date
+  birth_data$duration <- as.numeric(birth_data$Tr3_end - birth_data$Pre) + 1
+  
+  # Create new columns for each day between start and end date
   for (i in 1:nrow(birth_data)) {
-    start_date <- birth_data$Pre[i]
-    end_date <- birth_data$Tr3_end[i]
-    
-    # Calculate the number of days between the start and end dates
-    num_days <- as.integer(end_date - start_date)
-    
-    # Create new columns for each day
-    for (j in 1:num_days) {
-      new_col_name <- paste0("Day_", j)
-      date_val <- start_date + j
-      birth_data[i, new_col_name] <- date_val
-    }
+    start_day <- birth_data$Pre[i]
+    end_day <- birth_data$Tr3_end[i]
+    num_days <- birth_data$duration[i]
+    date_range <- seq(start_day, end_day, by = "day")
+    column_names <- paste0("Day_", 1:num_days)
+    birth_data[i, column_names] <- date_range
   }
+  
+  # Find columns starting with "Day_"
+  day_columns <- grep("^Day_", names(birth_data), value = TRUE)
+  
+  # Convert numeric columns to date format
+  birth_data[, day_columns] <- lapply(birth_data[, day_columns], function(x) as.Date(as.numeric(x), origin = "1970-01-01"))
+  
+  birth_data <- birth_data %>%
+    select(-duration)
+  
   return(birth_data)
 }
 
