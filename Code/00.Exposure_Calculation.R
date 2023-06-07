@@ -39,6 +39,9 @@ Exposure <- Temperature %>%
 
 create_days <- function(birth_data){
   
+  birth_data <- birth_data %>%
+    data.frame()
+  
   # Calculate number of days between start and end date
   birth_data$duration <- as.numeric(birth_data$Tr3_end - birth_data$Pre) + 1
   
@@ -100,7 +103,7 @@ Exposure_Calculation_pipeline <- function(birth_data) {
 
 # Run in parallel    
 plan(multisession, workers = (availableCores() - 1))
-TAVG_Exposure <- Exposure_Calculation_pipeline(birth)
+TAVG_Exposure <- Exposure_Calculation_pipeline(dataset)
 
 setwd("~/Trimester_Calculation/Data/Outputs")
 write_parquet(TAVG_Exposure, "TAVG_Exposure.parquet")
