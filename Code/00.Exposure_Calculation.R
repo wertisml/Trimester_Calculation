@@ -16,7 +16,7 @@ birth <- open_dataset("Trimester_Data.parquet") %>%
          Tr3_end = Date,
          Days_Between = interval(Pre, Tr3_end) %/% days(1), # Determine the number of days between the start of trimester 1 and birth
          Location = location) %>%
-  filter(Days_Between <= 301) %>% # If the individual was pregnate for over 301 days they are removed, there are some errors with individuals pregnate for 600+ days
+  filter(Days_Between <= 392) %>% # If the individual was pregnate for over 301 days they are removed, there are some errors with individuals pregnate for 600+ days
   select(location, Location, Date, RFA_ID, Pre, Tr3_end)
 
 Temperature <- open_dataset("Heatwave.parquet") %>%
@@ -69,18 +69,24 @@ create_days <- function(birth_data){
 
 # Assign TAVG temps to each day
 assign_Exposure_temperatures <- function(birth_data){
-  # Iterate over the date columns in the birth dataset
-  for (col in colnames(birth_data)[-c(1:5)]) {
-    # Perform a left join to match dates and replace with temperature values
-    merged_dataset <- birth_data %>%
-      rename("Date_in_Question" = col) %>%
-      left_join(Exposure, by = c("Date_in_Question" = "Date", "location" = "location")) %>%
-      select("Date_in_Question", Exposure) %>%
-      rename(!!col := Exposure)
-    
-    # Replace the original birth dataset column with the merged dataset column
-    birth_data[, col] <- merged_dataset[, col]
-  }
+  
+  birth_data <- birth_data %>%
+    mutate(row = row_number())
+  
+  birth_data <- birth_data %>%
+    select(starts_with("Day"), location, row) %>%
+    tidyr::pivot_longer(c(-"location", -"row")) %>%
+    group_by(location) %>%
+    left_join(Exposure, by = c("location" = "location", "value" = "Date")) %>%
+    select(-value) %>%
+    pivot_wider(names_from = name, values_from = Exposure) %>%
+    data.frame() %>%
+    left_join(birth_data %>%
+                select(location, row, Date, RFA_ID, Pre, Tr3_end),
+              by = join_by(location, row)) %>%
+    select(-row) %>%
+    relocate(c("Date", "RFA_ID", "Pre", "Tr3_end", .after = "location"))
+  
   return(birth_data)
 }
 
@@ -103,7 +109,7 @@ Exposure_Calculation_pipeline <- function(birth_data) {
 
 # Run in parallel    
 plan(multisession, workers = (availableCores() - 1))
-TAVG_Exposure <- Exposure_Calculation_pipeline(dataset)
+TAVG_Exposure <- Exposure_Calculation_pipeline(birth)
 
 setwd("~/Trimester_Calculation/Data/Outputs")
 write_parquet(TAVG_Exposure, "TAVG_Exposure.parquet")
