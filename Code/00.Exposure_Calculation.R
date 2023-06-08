@@ -45,15 +45,27 @@ create_days <- function(birth_data){
   # Calculate number of days between start and end date
   birth_data$duration <- as.numeric(birth_data$Tr3_end - birth_data$Pre) + 1
   
-  # Create new columns for each day between start and end date
-  for (i in 1:nrow(birth_data)) {
-    start_day <- birth_data$Pre[i]
-    end_day <- birth_data$Tr3_end[i]
-    num_days <- birth_data$duration[i]
-    date_range <- seq(start_day, end_day, by = "day")
-    column_names <- paste0("Day_", 1:num_days)
-    birth_data[i, column_names] <- date_range
-  }
+  start_day <- birth_data$Pre
+  end_day <- birth_data$Tr3_end
+  num_days <- birth_data$duration
+  column_names <- paste0("Day_", 1:max(num_days))
+  
+  # Create a list of date ranges, padding shorter ranges with NA values
+  date_ranges <- mapply(function(start, end, days) {
+    seq(start, end, by = "day")[1:days]
+  }, start_day, end_day, num_days)
+  
+  # Pad shorter date ranges with NA values
+  max_length <- max(num_days)
+  date_ranges <- lapply(date_ranges, function(x) {
+    if (length(x) < max_length) {
+      c(x, rep(NA, max_length - length(x)))
+    } else {
+      x
+    }
+  })
+  
+  birth_data[column_names] <- as.data.frame(do.call(rbind, date_ranges))
   
   # Find columns starting with "Day_"
   day_columns <- grep("^Day_", names(birth_data), value = TRUE)
@@ -109,7 +121,7 @@ Exposure_Calculation_pipeline <- function(birth_data) {
 
 # Run in parallel    
 plan(multisession, workers = (availableCores() - 1))
-TAVG_Exposure <- Exposure_Calculation_pipeline(birth)
+system.time(TAVG_Exposure <- Exposure_Calculation_pipeline(birth))
 
 setwd("~/Trimester_Calculation/Data/Outputs")
 write_parquet(TAVG_Exposure, "TAVG_Exposure.parquet")
